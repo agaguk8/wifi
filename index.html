@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar Wi-Fi Mobile</title>
+</head>
+<body>
+  <h2>Test GPS</h2>
+  <p id="resultat">Attente de position...</p>
+
+  <script>
+    navigator.geolocation.getCurrentPosition(pos => {
+      document.getElementById("resultat").innerText =
+        `Latitude : ${pos.coords.latitude}, Longitude : ${pos.coords.longitude}`;
+    }, err => {
+      document.getElementById("resultat").innerText =
+        `Erreur : ${err.message}`;
+      console.error(err);
+    });
+  </script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
+      background-color: #f9f9f9;
+    }
+    h2 {
+      text-align: center;
+    }
+    #map {
+      height: 400px;
+      margin-top: 20px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #info {
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🛰️ Radar Wi-Fi Mobile</h2>
+  <button onclick="addMarker()">Ajouter une mesure</button>
+  <div id="info">Localisation en cours...</div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialisation de la carte
+    let map = L.map('map').setView([45.5, -73.6], 13); // Position approximative par défaut
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Mise à jour de la position si disponible
+    navigator.geolocation.getCurrentPosition(position => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      map.setView([lat, lon], 16);
+      L.circle([lat, lon], {
+        radius: 20,
+        color: 'green',
+        fillColor: '#3f0',
+        fillOpacity: 0.5
+      }).addTo(map);
+      document.getElementById("info").innerText = `Position détectée : ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+    }, error => {
+      console.error("Erreur géolocalisation :", error);
+      document.getElementById("info").innerText = "Impossible d'obtenir la position.";
+    });
+
+    // Fonction pour ajouter un marqueur
+    function addMarker() {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const signal = prompt("Force du signal Wi-Fi ? (ex: -65 dBm)");
+
+        if (signal) {
+          L.marker([lat, lon]).addTo(map)
+            .bindPopup(`📶 Signal : ${signal} dBm<br/>📍 Localisation : ${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+            .openPopup();
+          document.getElementById("info").innerText = `✅ Mesure ajoutée à ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        } else {
+          document.getElementById("info").innerText = "🚫 Mesure annulée (aucun signal fourni)";
+        }
+      }, err => {
+        console.error("Erreur localisation lors de l’ajout :", err);
+        document.getElementById("info").innerText = "❌ Impossible de récupérer la position.";
+      });
+    }
+  </script>
+</body>
+</html>
